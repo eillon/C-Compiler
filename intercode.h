@@ -60,8 +60,6 @@ struct InterCodes_{
 InterCodes codeHead;
 
 
-
-
 void initInterCode();
 void insertOperand(Operands head, Operand op);
 void insertInterCode(InterCodes ic);

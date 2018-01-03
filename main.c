@@ -2,6 +2,7 @@
 #include "syntax.tab.h"
 #include "treenode.h"
 #include "irisim.h"
+#include "assem.h"
 
 extern FILE* yyin;
 extern int yylineno;
@@ -12,7 +13,10 @@ extern int error_num;
 
 int main(int argc,char **argv){
 	
-	if(argc<=2) return 1;
+	if(argc<=2){
+		printf("Need at least 2 parameters!\n");
+		return 1;
+	}
 	
 	FILE *fp1=fopen(argv[1],"r");
 	if(fp1==NULL){
@@ -36,7 +40,11 @@ int main(int argc,char **argv){
 		translateProgram(root);     //生成中间代码
 		printf("Test: translateProgram over. \n");
 		optimizeIR();				//中间代码优化
-		printInterCode(fp2);	   	//输出中间代码
+		printf("Test: optimizeIR over. \n");
+	//	printInterCode(fp2);
+
+		printAssem(fp2);	   	//输出汇编代码
+		printf("Test: printAssem over. \n");
 	}
 
 

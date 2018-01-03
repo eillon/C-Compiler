@@ -1,4 +1,4 @@
-CFILE =irisim.c intercode.c main.c symboltable.c treenode.c syntax.tab.c
+CFILE =irisim.c intercode.c main.c symboltable.c treenode.c syntax.tab.c assem.c
 
 parser:syntax.y lexical.l *.c *.h 
 	bison -d -v syntax.y
