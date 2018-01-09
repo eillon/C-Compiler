@@ -32,20 +32,20 @@ void printAssem(FILE *fp){
             case ASSIGN:{
                 Operand left=ic->code->u.assignOp.left;
                 Operand right=ic->code->u.assignOp.right;
-                int x=getReg(left);
+                int x=getReg(fp,left);
                 if(left->kind==VADDR_OP||left->kind==TADDR_OP){
-                    int y=getReg(right);
+                    int y=getReg(fp,right);
                     fprintf(fp," sw $%d,0($%d)\n",y,x);
                 }
                 else if(right->kind==CONST_OP){
                     fprintf(fp," li $%d, %d\n",x,ic->code->u.assignOp.right->u.val_const);
                 }
                 else if(right->kind==VADDR_OP|| right->kind==TADDR_OP){
-                    int y=getReg(right);
+                    int y=getReg(fp,right);
                     fprintf(fp," lw $%d,0($%d)\n",x,y);
                 }
                 else{
-                    int y=getReg(right);
+                    int y=getReg(fp,right);
                     fprintf(fp," move $%d,$%d\n",x,y);
                 }
                 break;
@@ -66,7 +66,7 @@ void printAssem(FILE *fp){
                 break;
             }
             case RETURN_IC:{
-                int x=getReg(ic->code->u.oneOp.op);
+                int x=getReg(fp,ic->code->u.oneOp.op);
                 fprintf(fp," move $v0,$%d\n",x);
                 fprintf(fp," jr $ra");
                 break;
@@ -79,6 +79,11 @@ void printAssem(FILE *fp){
                 break;
             }
             case READ:{
+                fprintf(fp," addi $sp,$sp,-4\n");
+                fprintf(fp," sw $ra,0($sp)\n");
+                fprintf(fp," jal read\n");
+                fprintf(fp," lw $ra,0($sp)\n");
+                fprintf(fp," addi $sp,$sp,4\n");
                 break;
             }
             case WRITE:{
@@ -86,7 +91,7 @@ void printAssem(FILE *fp){
             }
             case CALL:{
                 Operand op=ic->code->u.assignOp.right;
-                int x=getReg(ic->code->u.assignOp.left);
+                int x=getReg(fp,ic->code->u.assignOp.left);
                 fprintf(fp," jal %s\n",op->u.val_name);
                 fprintf(fp," move $%d, $v0\n",x);
                 break;
@@ -95,14 +100,14 @@ void printAssem(FILE *fp){
                 Operand op1=ic->code->u.binOp.op1;
                 Operand op2=ic->code->u.binOp.op2;
                 Operand result=ic->code->u.binOp.result;
-                int x=getReg(result);
-                int y=getReg(op1);
+                int x=getReg(fp,result);
+                int y=getReg(fp,op1);
                 
                 if(op2->kind==CONST_OP){
                     fprintf(fp," addi $%d,$%d,%d\n",x,y,op2->u.val_const);
                 }
                 else{
-                    int z=getReg(op2);
+                    int z=getReg(fp,op2);
                     fprintf(fp," add $%d,$%d,$%d\n",x,y,z);
                 }
                 break;
@@ -111,14 +116,14 @@ void printAssem(FILE *fp){
                 Operand op1=ic->code->u.binOp.op1;
                 Operand op2=ic->code->u.binOp.op2;
                 Operand result=ic->code->u.binOp.result;
-                int x=getReg(result);
-                int y=getReg(op1);
+                int x=getReg(fp,result);
+                int y=getReg(fp,op1);
                 
                 if(op2->kind==CONST_OP){
                     fprintf(fp," addi $%d,$%d,-%d\n",x,y,op2->u.val_const);
                 }
                 else{
-                    int z=getReg(op2);
+                    int z=getReg(fp,op2);
                     fprintf(fp," sub $%d,$%d,$%d\n",x,y,z);
                 }
                 break;
@@ -127,9 +132,9 @@ void printAssem(FILE *fp){
                 Operand op1=ic->code->u.binOp.op1;
                 Operand op2=ic->code->u.binOp.op2;
                 Operand result=ic->code->u.binOp.result;
-                int x=getReg(result);
-                int y=getReg(op1);
-                int z=getReg(op2);
+                int x=getReg(fp,result);
+                int y=getReg(fp,op1);
+                int z=getReg(fp,op2);
                 fprintf(fp," mul $%d,$%d,$%d\n",x,y,z);
                 break;
             }
@@ -137,9 +142,9 @@ void printAssem(FILE *fp){
                 Operand op1=ic->code->u.binOp.op1;
                 Operand op2=ic->code->u.binOp.op2;
                 Operand result=ic->code->u.binOp.result;
-                int x=getReg(result);
-                int y=getReg(op1);
-                int z=getReg(op2);
+                int x=getReg(fp,result);
+                int y=getReg(fp,op1);
+                int z=getReg(fp,op2);
                 
                 fprintf(fp," div $%d,$%d\n",y,z);
                 fprintf(fp," mflo $%d\n",x);
@@ -150,8 +155,8 @@ void printAssem(FILE *fp){
                 char *relop=ic->code->u.ifGotoOp.relop;
                 Operand op2=ic->code->u.ifGotoOp.op2;
                 Operand label=ic->code->u.ifGotoOp.label;
-                int x=getReg(op1);
-                int y=getReg(op2);
+                int x=getReg(fp,op1);
+                int y=getReg(fp,op2);
                 if(strcmp(relop,"==")==0) fprintf(fp," beq");
                 if(strcmp(relop,"!=")==0) fprintf(fp," bne");
                 if(strcmp(relop,">")==0) fprintf(fp," bgt");
@@ -172,6 +177,6 @@ void printAssem(FILE *fp){
     }
 }
 
-int getReg(Operand op){
+int getReg(FILE* fp,Operand op){
     return 24;
 }
