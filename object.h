@@ -11,11 +11,12 @@ typedef struct _var_t* var_t;
 int offset;
 
 struct _reg_t{
-	Operands op;
+	char* var;
+	struct _reg_t* next;
 };
 
 struct _var_t{
-	Operand op;
+	char* name;
 	int reg;
 	int offset;
 	struct _var_t *next;
@@ -26,14 +27,9 @@ var_t varaddr;
 
 
 void initreg();
-void swreg();
 void add_var( var_t  v);
-int findreg(Operand op);
 int choose() ;
-var_t findvar(Operand op);
+var_t findvar(char *name);
 int getReg(FILE *fp, Operand op);
-
-//void objectcode(InterCode ir, FILE * fp);
-//void some(FILE *fp);
 
 #endif

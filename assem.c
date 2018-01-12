@@ -25,7 +25,7 @@ void printAssem(FILE *fp){
     fprintf(fp," move $v0,$0\n");
     fprintf(fp," jr $ra\n");
 
-    int argNum=0; //记录某个函数参数（ARG)个数，大于4的时候存到栈里； 遇到CALL的时候清零
+    int argNum=0; //记录某个函数参数（ARG)个数，大于4的时候存到栈里； 
     initreg();
 
     InterCodes ic=codeHead->next;
@@ -62,6 +62,7 @@ void printAssem(FILE *fp){
                 Operand op=ic->code->u.oneOp.op;
                 fprintf(fp,"\n%s:\n",op->u.val_name);
                 fprintf(fp," move $fp, $sp\n");
+                fprintf(fp," addi $sp,$sp,-1024\n");
                 break;
             }
             case GOTO:{
@@ -88,6 +89,15 @@ void printAssem(FILE *fp){
                 break;
             }    
             case PARAM:{
+                int x=getReg(fp,ic->code->u.oneOp.op);
+                if(argNum<=4){
+                    fprintf(fp," move $%d, $a%d\n",x,argNum);
+                }
+                else{
+                    fprintf(fp," lw $%d, 0($sp)\n",x);
+                //    fprintf()
+                }
+                argNum--;
                 break;
             }
             case READ:{
@@ -114,7 +124,6 @@ void printAssem(FILE *fp){
                 break;
             }
             case CALL:{
-                argNum=0;
                 fprintf(fp," addi $sp, $sp, -4\n");  //返回地址
                 fprintf(fp," sw $ra, 0($sp)\n");
                 fprintf(fp," addi $sp, $sp, -4\n");  //fp旧址
