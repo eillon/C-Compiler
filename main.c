@@ -30,6 +30,16 @@ int main(int argc,char **argv){
         return 1;
     }
 
+////////
+    char tmp[99];
+    sprintf(tmp,"%s.ir",argv[2]);
+    FILE* fp3=fopen(tmp,"w");
+    if(fp3==NULL){
+        perror(tmp);
+        return 1;
+    }
+////////
+
 	yylineno=1;
 	yyrestart(fp1);
 	
@@ -41,7 +51,9 @@ int main(int argc,char **argv){
 		printf("Test: translateProgram over. \n");
 		optimizeIR();				//中间代码优化
 		printf("Test: optimizeIR over. \n");
-	//	printInterCode(fp2);
+	
+		printInterCode(fp3);
+		printf("Test: printInterCode over. \n");
 
 		printAssem(fp2);	   	//输出汇编代码
 		printf("Test: printAssem over. \n");
@@ -50,6 +62,7 @@ int main(int argc,char **argv){
 
 	fclose(fp1);
 	fclose(fp2);
+	fclose(fp3);
 	return 0;
 }
 

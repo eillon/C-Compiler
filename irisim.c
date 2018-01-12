@@ -613,3 +613,149 @@ void optimizeIR(){
     }
 
 }
+
+
+void getBlock()
+{
+	InterCodes code = codeHead ->next;
+	for(;code != codeHead ;code = code ->next)
+	{
+		code->block =0;
+	}
+
+	int i = 2;
+	codeHead ->block = 0;
+	code = codeHead->next;
+	for(;code!= codeHead ;code = code ->next)
+	{
+		if(code == codeHead->next)
+			code->block = 1;
+		if(code ->code ->kind == 0&& code ->block ==0)
+		{
+			code->block =i;
+			i ++;
+		}
+		if((code ->code->kind ==2 /*||code->code->kind ==14*/)&&code->next!=codeHead)
+		{
+			if(code->next->block== 0){
+				code->next->block =i; i++;} 
+		}
+		//printf("%d\n",code->block);
+	}
+	
+}
+
+
+int change(InterCodes code,int i , Operand Op)
+{
+	int num = code->code->kind;
+	if(num>= 0&& num<= 7)
+	{
+		if(code->code->u.oneOp.op->kind == 4 && code->code->u.oneOp.op->u.val_temp ==i)
+		{
+			code->code->u.oneOp.op = Op;
+		}
+	}
+	else if(num >= 8 && num <= 9)
+	{
+		if(code->code->u.assignOp.right->kind == 4 && code->code->u.assignOp.right->u.val_temp ==i)
+			code->code->u.assignOp.right = Op;
+		
+		if(code->code->u.assignOp.left->kind == 4 && code->code->u.assignOp.left->u.val_temp ==i)
+			return -1;
+		
+	}
+	else if(num>= 10 && num<= 13)
+	{
+		if(code->code->u.binOp.op1->kind == 4 && code->code->u.binOp.op1->u.val_temp ==i)
+			code->code->u.binOp.op1 = Op;
+	
+		if(code->code->u.binOp.op2->kind == 4 && code->code->u.binOp.op2->u.val_temp ==i)
+			code->code->u.binOp.op2 = Op;
+		
+		
+		if(code->code->u.binOp.result->kind == 4 && code->code->u.binOp.result->u.val_temp ==i)
+			return -1;
+	}
+	else if(num == 14 )
+	{
+		
+		if(code->code->u.ifGotoOp.op1->kind == 4 && code->code->u.ifGotoOp.op1->u.val_temp ==i)
+			code->code->u.ifGotoOp.op1 = Op;
+		
+		if(code->code->u.ifGotoOp.op2->kind == 4 && code->code->u.ifGotoOp.op2->u.val_temp ==i)
+			code->code->u.ifGotoOp.op2 = Op;
+	}
+	else
+	{
+		if(code->code->u.decOp.op->kind == 4 && code->code->u.decOp.op->u.val_temp ==i)
+			return -1;
+	}
+	return 1;
+}
+
+void Opt()
+{
+	InterCodes code = codeHead ->next;
+	for(;code != codeHead;)
+	{
+		if(code ->code->kind == 8)
+		{
+			if(code->code->u.assignOp.left->kind ==4)
+			{
+				int i= code->code->u.assignOp.left->u.val_temp;
+				Operand rOp = code->code->u.assignOp.right;
+				
+				InterCodes code1 = code->next;
+				
+				for(;code1!= codeHead&&code1 ->block ==0;code1 = code1->next)
+				{
+					int j;
+					j = change(code1,i,rOp);
+					if(j == -1)
+						break;
+				}
+				code1= code;
+				code = code->next;
+				removeInterCode(code1);
+			}
+			else
+				code = code->next;
+		}
+		else
+			code = code->next;
+	}
+}
+
+void Opt2()
+{
+	InterCodes code = codeHead->next;
+	for(;code != codeHead;code = code->next)
+	{
+		if(code->code->kind == 14 && code->next->code->kind ==2)
+		{
+			int i = code->next->code->u.oneOp.op->u.val_label;
+			removeInterCode(code->next);
+			InterCodes code1 = code->next;
+			for(;code1!= codeHead;code1 = code1->next)
+			{
+				if(code1->code->kind == 0 &&code1->code->u.oneOp.op->u.val_label ==i)
+					break;
+			}
+			code1 = code1 ->prev;
+			removeInterCode(code1->next);
+			code1 = code1->next;
+			InterCodes code2 = code1->next;
+			for(;code2!= codeHead /*&&code2->block==0*/;code2 = code2->next);
+			code2 = code2->prev;
+			code1->prev->next = code2->next;
+			code2->next->prev = code1->prev;
+			code->next->prev = code2;
+			code2->next = code->next;
+			code->next = code1;
+			code1->prev = code;
+		}
+	}
+	printf("Optend\n");	
+}
+

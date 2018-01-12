@@ -1,5 +1,5 @@
 #include "assem.h"
-
+#include "object.h"
 //将汇编代码序列输出到一个文件中
 void printAssem(FILE *fp){
     fprintf(fp,".data\n");
@@ -15,7 +15,7 @@ void printAssem(FILE *fp){
     fprintf(fp," li $v0,5\n");
     fprintf(fp," syscall\n");
     fprintf(fp," jr $ra\n");
-    //write()
+    //write(n)
     fprintf(fp,"\nwrite:\n");
     fprintf(fp," li $v0,1\n");
     fprintf(fp," syscall\n");
@@ -24,6 +24,9 @@ void printAssem(FILE *fp){
     fprintf(fp," syscall\n");
     fprintf(fp," move $v0,$0\n");
     fprintf(fp," jr $ra\n");
+
+    int argNum=0; //记录某个函数参数（ARG)个数，大于4的时候存到栈里； 遇到CALL的时候清零
+    initreg();
 
     InterCodes ic=codeHead->next;
     if(ic==codeHead) {printf("IC==CODEHEAD\n");}
@@ -58,6 +61,7 @@ void printAssem(FILE *fp){
             case FUNCTION:{
                 Operand op=ic->code->u.oneOp.op;
                 fprintf(fp,"\n%s:\n",op->u.val_name);
+                fprintf(fp," move $fp, $sp\n");
                 break;
             }
             case GOTO:{
@@ -68,11 +72,19 @@ void printAssem(FILE *fp){
             case RETURN_IC:{
                 int x=getReg(fp,ic->code->u.oneOp.op);
                 fprintf(fp," move $v0,$%d\n",x);
-                fprintf(fp," jr $ra");
+                fprintf(fp," jr $ra\n");
                 break;
             }
             case ARG:{
-                
+                argNum++;
+                int x=getReg(fp,ic->code->u.oneOp.op);
+                if(argNum<=4){
+                    fprintf(fp," move $a%d, $%d\n",argNum,x);
+                }
+                else{
+                    fprintf(fp," addi $sp, $sp, -4\n");
+                    fprintf(fp," sw $%d, 0($sp)\n",x);
+                }
                 break;
             }    
             case PARAM:{
@@ -84,15 +96,39 @@ void printAssem(FILE *fp){
                 fprintf(fp," jal read\n");
                 fprintf(fp," lw $ra,0($sp)\n");
                 fprintf(fp," addi $sp,$sp,4\n");
+
+                int x=getReg(fp,ic->code->u.oneOp.op);
+                fprintf(fp," move $%d, $v0\n",x);
                 break;
             }
             case WRITE:{
+                int x=getReg(fp,ic->code->u.oneOp.op);
+                fprintf(fp," move $a0, $%d\n",x);
+
+                fprintf(fp," addi $sp,$sp,-4\n");
+                fprintf(fp," sw $ra, 0($sp)\n");
+                fprintf(fp," jal write\n");
+                fprintf(fp," lw $ra, 0($sp)\n");
+                fprintf(fp," addi $sp, $sp, 4\n");
+
                 break;
             }
             case CALL:{
+                argNum=0;
+                fprintf(fp," addi $sp, $sp, -4\n");  //返回地址
+                fprintf(fp," sw $ra, 0($sp)\n");
+                fprintf(fp," addi $sp, $sp, -4\n");  //fp旧址
+                fprintf(fp," sw $fp, 0($sp)\n");
+
                 Operand op=ic->code->u.assignOp.right;
                 int x=getReg(fp,ic->code->u.assignOp.left);
                 fprintf(fp," jal %s\n",op->u.val_name);
+                
+                fprintf(fp," lw $fp, 0($sp)\n");
+                fprintf(fp," addi $sp, $sp, 4\n");
+                fprintf(fp," lw $ra, 0($sp)\n");
+                fprintf(fp," addi $sp, $sp, 4\n");
+
                 fprintf(fp," move $%d, $v0\n",x);
                 break;
             }
@@ -177,6 +213,3 @@ void printAssem(FILE *fp){
     }
 }
 
-int getReg(FILE* fp,Operand op){
-    return 24;
-}

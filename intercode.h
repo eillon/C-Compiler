@@ -55,6 +55,7 @@ struct InterCode_{
 struct InterCodes_{
     InterCode code;
     InterCodes prev,next;
+	int block;
 };
 
 InterCodes codeHead;
@@ -96,5 +97,10 @@ void genMul(Operand result,Operand op1,Operand op2);
 void genDiv(Operand result,Operand op1,Operand op2);
 void genIfGoto(Operand op1,Operand op2, Operand label, char* relop);
 void genDec(Operand op, int size);
+
+
+void getBlock();
+void Opt();
+void Opt2();
 
 #endif

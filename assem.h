@@ -9,7 +9,7 @@
 //extern InterCodes codeHead;
 
 void printAssem(FILE *fp);
-int getReg(FILE* fp, Operand op);
+
 
 
 #endif

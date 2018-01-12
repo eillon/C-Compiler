@@ -1,0 +1,13 @@
+struct A{
+	int aa[3][5][7];
+	};
+
+
+int main(){
+	struct A c;
+	c.aa[0][0][0]= 1;
+	int a[5][9];
+	int b=2;
+	write(c.aa[0][0][0]);
+	return 0;
+	}

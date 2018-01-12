@@ -1,0 +1,13 @@
+int bo(int c)
+{
+	c= -c;
+	return c;
+}
+
+int main(){
+	int a;
+	a = read();
+	a = bo(a);
+	write(a);
+	return 1;
+}
