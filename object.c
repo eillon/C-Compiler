@@ -12,17 +12,23 @@ void initreg()
 	offset = 0;
 }
 
-void swreg()
+void swreg(FILE* fp)
 {
-	var_t var = varaddr;
-	for(;var != NULL;var = var->next)
-	{
-		if(var->reg != -1)
-		{
-			
+	for(int i=0;i<REG;i++){
+		if(regtable[i]!=NULL){
+			while(regtable[i]!=NULL){
+				var_t tmp=findvar(regtable[i]->var);
+				tmp->reg=-1;
+				fprintf(fp," sw $%d, -%d($fp)\n",i+8,tmp->offset);
+				reg_t rtmp=regtable[i];
+				regtable[i]=regtable[i]->next;
+				free(rtmp);
+			}
+			regtable[i]=NULL;
 		}
 	}
 }
+
 void add_var( var_t  v)
 {
 	if(v == NULL)
@@ -40,6 +46,8 @@ void add_var( var_t  v)
 		vc->next = v;
 	}
 }
+
+
 
 // find free place in regtable
 int findfreg()
@@ -97,11 +105,11 @@ int getReg(FILE *fp, Operand op)
 {
 	char *name = malloc(32);
 	memset(name,0,32);
-	if(op ->kind == 0)
+	if(op ->kind == VAR_OP|| op->kind== VADDR_OP || op->kind==VREFE_OP )
 	{
 		strcpy(name, op->u.val_name);
 	}
-	else if(op ->kind == 4)
+	else if(op ->kind == TADDR_OP || op->kind==TEMP_OP || op->kind==TREFE_OP )
 	{
 		name[0] = 't';
 		sprintf(name+1,"%d", op->u.val_temp);
@@ -109,7 +117,7 @@ int getReg(FILE *fp, Operand op)
 
 	var_t var = findvar(name);
 	int flag = 0;
-	if(var == NULL)   //不在变量表
+	if(var == NULL)
 	{
 		var =  malloc(sizeof(struct _var_t));
 		var->name = name;
@@ -123,7 +131,7 @@ int getReg(FILE *fp, Operand op)
 		flag = 1;
 	}
 	
-	if(var ->reg == -1) //不在寄存器里
+	if(var ->reg == -1)
 	{
 		int reg = findfreg();
 		if(reg != -1)
@@ -174,7 +182,6 @@ int getReg(FILE *fp, Operand op)
 			regtable[reg]->next = NULL;
 			
 		}
-
 		if(var->offset >= 0 && !flag)
 		{
 			fputs("subu $v1 ,$fp , ",fp);
@@ -192,6 +199,10 @@ int getReg(FILE *fp, Operand op)
 	 
 	}
 	
+	if(op->kind==TREFE_OP||op->kind==VREFE_OP){
+		fprintf(fp," subu $%d, $fp,%d\n",var->reg+8,var->offset);
+	}
+
 	return var->reg + 8;
 }
 

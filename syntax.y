@@ -32,9 +32,14 @@ Node *root;
 
 
 %right ASSIGNOP
-%left OR AND RELOP PLUS MINUS STAR DIV
+%left OR 
+%left AND 
+%left RELOP 
+%left PLUS MINUS 
+%left STAR DIV
 %right NOT
-%left DOT LB RB LP RP
+%left LB RB LP RP
+%left DOT 
 %nonassoc ELSE STRUCT RETURN WHILE
 
 %%

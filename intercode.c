@@ -16,6 +16,7 @@ void initInterCode(){
     codeHead->next=codeHead;
     codeHead->prev=codeHead;
     codeHead->code=NULL;
+    codeHead->block=99;
 }
 
 void insertInterCode(InterCodes ic){
@@ -77,7 +78,7 @@ Operand chAddr(Operand op){
         t->kind=VADDR_OP;
         t->u.val_name=op->u.val_name;
     }
-    t->isAddr=true;
+    t->isAddr=false;
     return t;
 }
 
@@ -183,7 +184,7 @@ void genAdd(Operand result,Operand op1,Operand op2){
     InterCodes ic=malloc(sizeof(struct InterCodes_));
     ic->code=malloc(sizeof(struct InterCode_));
     ic->code->kind=ADD;
-    result->isAddr=op1->isAddr & op2->isAddr;
+    result->isAddr=op1->isAddr | op2->isAddr;
     ic->code->u.binOp.result=result;
     ic->code->u.binOp.op1=op1;
     ic->code->u.binOp.op2=op2;
@@ -194,7 +195,7 @@ void genSub(Operand result,Operand op1,Operand op2){
     InterCodes ic=malloc(sizeof(struct InterCodes_));
     ic->code=malloc(sizeof(struct InterCode_));
     ic->code->kind=SUB;
-    result->isAddr=op1->isAddr & op2->isAddr;
+    result->isAddr=op1->isAddr | op2->isAddr;
     ic->code->u.binOp.result=result;
     ic->code->u.binOp.op1=op1;
     ic->code->u.binOp.op2=op2;
@@ -205,7 +206,7 @@ void genMul(Operand result, Operand op1, Operand op2){
     InterCodes ic=malloc(sizeof(struct InterCodes_));
     ic->code=malloc(sizeof(struct InterCode_));
     ic->code->kind=MUL;
-    result->isAddr=op1->isAddr & op2->isAddr;
+    result->isAddr=op1->isAddr | op2->isAddr;
     ic->code->u.binOp.result=result;
     ic->code->u.binOp.op1=op1;
     ic->code->u.binOp.op2=op2;
@@ -216,7 +217,7 @@ void genDiv(Operand result,Operand op1, Operand op2){
     InterCodes ic=malloc(sizeof(struct InterCodes_));
     ic->code=malloc(sizeof(struct InterCode_));
     ic->code->kind=DIV_IC;
-    result->isAddr=op1->isAddr & op2->isAddr;
+    result->isAddr=op1->isAddr | op2->isAddr;
     ic->code->u.binOp.result=result;
     ic->code->u.binOp.op1=op1;
     ic->code->u.binOp.op2=op2;

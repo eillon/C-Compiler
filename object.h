@@ -8,7 +8,7 @@
 
 typedef struct _reg_t* reg_t;
 typedef struct _var_t* var_t;
-int offset;
+
 
 struct _reg_t{
 	char* var;
@@ -24,9 +24,10 @@ struct _var_t{
 
 reg_t regtable[REG];
 var_t varaddr;
-
+int offset;
 
 void initreg();
+void swreg(FILE* fp);
 void add_var( var_t  v);
 int choose() ;
 var_t findvar(char *name);

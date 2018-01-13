@@ -12,6 +12,8 @@ void translateExp(Node* node,Operand place){
                 Operand t1=newTemp();
                 Operand v1=newVar(pc->id_value);
                 translateExp(pp->sibling,t1);
+                if(t1->isAddr==true) t1=chAddr(t1);
+                if(v1->isAddr==true) v1=chAddr(v1);
                 genAssign(v1,t1);
                 genAssign(place,v1);
                 return;
@@ -21,6 +23,8 @@ void translateExp(Node* node,Operand place){
                 Operand t2=newTemp();
                 translateExp(p,t1);
                 translateExp(pp->sibling,t2);
+                if(t1->isAddr==true) t1=chAddr(t1);
+                if(t2->isAddr==true) t2=chAddr(t2);
                 genAssign(t1,t2);
                 genAssign(place,t1);
                 return;
@@ -67,6 +71,8 @@ void translateExp(Node* node,Operand place){
             Operand t2=newTemp();
             translateExp(p,t1);
             translateExp(pp->sibling,t2);
+            if(t1->isAddr==true) t1=chAddr(t1);
+            if(t2->isAddr==true) t2=chAddr(t2);
             genAdd(place,t1,t2);
             return ;
         }
@@ -171,6 +177,7 @@ void translateExp(Node* node,Operand place){
                 }
                 //printf("Test: -->ID LP Args RP:  Program get there. \n");
                 if(strcmp(p->id_value,"write")==0){
+                    
                     genWrite(argList->next->op);
                     //printf("Test: -->ID LP Args RP: Program get there? \n");
                     return;
@@ -258,12 +265,14 @@ void translateArgs(Node *node,Operands argList){
     if(pp==NULL){
         Operand t1=newTemp();
         translateExp(p,t1);
+        if(t1->isAddr==true) t1=chAddr(t1);
         insertOperand(argList,t1);
         return;
     }
     else{
         Operand t1=newTemp();
         translateExp(p,t1);
+        if(t1->isAddr==true) t1=chAddr(t1);
         insertOperand(argList,t1);
         translateArgs(pp->sibling,argList);
         return;
@@ -488,7 +497,7 @@ void translateArray(Node *node,Operand place){
     Node *pc=p->child;
     if(strcmp(pc->name,"ID")==0){
         Symbol s=searchtable(pc->id_value);
-        Type type=s->t.type;
+        Type type=s->t.type->u.array.elem;
         Operand v1=newVar(pc->id_value);
         Operand f1=chRefe(v1);
         int typeSize=getTypeSize(type);
@@ -581,6 +590,7 @@ int getTypeSize(Type type){
 }
 
 void optimizeIR(){
+    getBlock();
     InterCodes ic=codeHead->next;
     while(ic!=codeHead){
         switch(ic->code->kind){
@@ -617,32 +627,26 @@ void optimizeIR(){
 
 void getBlock()
 {
-	InterCodes code = codeHead ->next;
-	for(;code != codeHead ;code = code ->next)
-	{
-		code->block =0;
-	}
+	for(InterCodes code = codeHead ->next;code != codeHead ;code = code ->next)
+    	code->block =0;
 
 	int i = 2;
-	codeHead ->block = 0;
-	code = codeHead->next;
-	for(;code!= codeHead ;code = code ->next)
+	
+	for(InterCodes ic = codeHead->next;ic!= codeHead ;ic = ic ->next)
 	{
-		if(code == codeHead->next)
-			code->block = 1;
-		if(code ->code ->kind == 0&& code ->block ==0)
+		if(ic == codeHead->next)
+			ic->block = 1;
+		else if(ic ->code ->kind == LABEL)
 		{
-			code->block =i;
+			ic->block =i;
 			i ++;
 		}
-		if((code ->code->kind ==2 /*||code->code->kind ==14*/)&&code->next!=codeHead)
+		else if(ic ->code->kind ==GOTO || ic->code->kind ==IFGOTO)
 		{
-			if(code->next->block== 0){
-				code->next->block =i; i++;} 
+            ic->next->block =i; 
+            i++; 
 		}
-		//printf("%d\n",code->block);
 	}
-	
 }
 
 

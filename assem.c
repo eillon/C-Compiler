@@ -25,12 +25,12 @@ void printAssem(FILE *fp){
     fprintf(fp," move $v0,$0\n");
     fprintf(fp," jr $ra\n");
 
-    int argNum=0; //记录某个函数参数（ARG)个数，大于4的时候存到栈里； 
     initreg();
 
     InterCodes ic=codeHead->next;
+
     if(ic==codeHead) {printf("IC==CODEHEAD\n");}
-    while(ic!=codeHead){
+    while(ic!=codeHead){        
         switch(ic->code->kind){
             case ASSIGN:{
                 Operand left=ic->code->u.assignOp.left;
@@ -56,13 +56,16 @@ void printAssem(FILE *fp){
             case LABEL:{
                 Operand op=ic->code->u.oneOp.op;
                 fprintf(fp,"label%d:\n",op->u.val_label);
+                
                 break;
             }
             case FUNCTION:{
                 Operand op=ic->code->u.oneOp.op;
                 fprintf(fp,"\n%s:\n",op->u.val_name);
+            //    if(strcmp(op->u.val_name,"main")==0){
                 fprintf(fp," move $fp, $sp\n");
                 fprintf(fp," addi $sp,$sp,-1024\n");
+            //    }
                 break;
             }
             case GOTO:{
@@ -72,15 +75,17 @@ void printAssem(FILE *fp){
             }
             case RETURN_IC:{
                 int x=getReg(fp,ic->code->u.oneOp.op);
+                fprintf(fp," move $sp,$fp\n");
                 fprintf(fp," move $v0,$%d\n",x);
                 fprintf(fp," jr $ra\n");
                 break;
             }
             case ARG:{
-                argNum++;
+                int argNum=countArg(ic); //记录某个函数参数（ARG)个数，大于4的时候存到栈里； 
+                
                 int x=getReg(fp,ic->code->u.oneOp.op);
                 if(argNum<=4){
-                    fprintf(fp," move $a%d, $%d\n",argNum,x);
+                    fprintf(fp," move $a%d, $%d\n",argNum-1,x);
                 }
                 else{
                     fprintf(fp," addi $sp, $sp, -4\n");
@@ -89,15 +94,15 @@ void printAssem(FILE *fp){
                 break;
             }    
             case PARAM:{
+                int argNum=countArg(ic);
                 int x=getReg(fp,ic->code->u.oneOp.op);
                 if(argNum<=4){
-                    fprintf(fp," move $%d, $a%d\n",x,argNum);
+                    fprintf(fp," move $%d, $a%d\n",x,argNum-1);
                 }
                 else{
-                    fprintf(fp," lw $%d, 0($sp)\n",x);
+                    fprintf(fp," lw $%d, %d($sp)\n",x,(argNum-3)*4+1024);
                 //    fprintf()
                 }
-                argNum--;
                 break;
             }
             case READ:{
@@ -212,13 +217,41 @@ void printAssem(FILE *fp){
                 break;
             }
             case DEC: {
+                Operand op=ic->code->u.decOp.op;
+                getReg(fp,op);
+                offset+=ic->code->u.decOp.size;
                 break; 
             } 
             default:
                 fprintf(fp,"%s","default\n");
                 break;
         }
+
         ic=ic->next;
+        if(ic!=codeHead){
+            switch(ic->code->kind){
+                case GOTO:
+                case IFGOTO:
+                    swreg(fp);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if(ic->block){ 
+        //    printf("Test: swreg %d\n",ic->block);
+            swreg(fp);
+        }
+        swreg(fp);
     }
 }
 
+int countArg(InterCodes ic){
+    int count=0;
+    while(ic->code->kind==ARG || ic->code->kind==PARAM){
+        count++;
+        ic=ic->next;
+    }
+    return count;
+}
